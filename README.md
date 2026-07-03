@@ -100,9 +100,24 @@ servers:
 uvicorn app.main:app --reload
 ```
 
-### 4. Call Any Registered Server
+### 4. Discover Required Credentials (MSG Custom)
 
-The `x-mcp-credentials` header carries all required credentials as a JSON string. The gateway routes the request to the correct server based on `{server_name}` in the URL path.
+The MCP specification does not define a way to ask a server "what credentials do you need?". MSG provides custom endpoints so clients can discover this dynamically before establishing a session.
+
+**List all registered servers and their required credentials:**
+```bash
+curl -X GET "http://127.0.0.1:8000/mcp/servers"
+```
+
+**Get info for a specific server:**
+```bash
+curl -X GET "http://127.0.0.1:8000/mcp/kintone/info"
+```
+*(These custom endpoints do not require authentication.)*
+
+### 5. Call Any Registered Server (MCP Compliant)
+
+Once you know the required credentials, pass them in the `x-mcp-credentials` header as a JSON string. The gateway dynamically spawns the process, injects the credentials, and routes the MCP request.
 
 **List tools (Kintone):**
 ```bash

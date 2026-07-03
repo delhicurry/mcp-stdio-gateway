@@ -60,6 +60,43 @@ async def mcp_session(server_name: str, credentials: Dict[str, str]):
 def read_root():
     return {"message": "MCP Stdio Gateway is running."}
 
+# ==============================================================================
+# MSG Custom Endpoints (Not part of the official MCP specification)
+# These endpoints help clients discover servers and their required credentials.
+# ==============================================================================
+
+@app.get("/mcp/servers")
+def list_servers():
+    """
+    [MSG Custom] List all registered MCP servers and their required credentials.
+    """
+    servers = []
+    for name, config in MCP_SERVER_REGISTRY.items():
+        servers.append({
+            "server_name": name,
+            "required_credentials": config.get("env_keys", [])
+        })
+    return {"servers": servers}
+
+@app.get("/mcp/{server_name}/info")
+def server_info(server_name: str):
+    """
+    [MSG Custom] Get information and required credentials for a specific server.
+    """
+    if server_name not in MCP_SERVER_REGISTRY:
+        raise HTTPException(status_code=404, detail=f"Unknown server: {server_name}")
+    
+    config = MCP_SERVER_REGISTRY[server_name]
+    return {
+        "server_name": server_name,
+        "command": f"{config.get('command')} {' '.join(config.get('args', []))}",
+        "required_credentials": config.get("env_keys", [])
+    }
+
+# ==============================================================================
+# MCP Specification Compliant Endpoints
+# ==============================================================================
+
 @app.get("/mcp/{server_name}/tools")
 async def list_tools(
     server_name: str,
