@@ -1,0 +1,14 @@
+servers:
+  kintone:
+    command: "npx"
+    args: ["-y", "@kintone/mcp-server"]
+    env_keys:
+      - "KINTONE_BASE_URL"
+      - "KINTONE_API_TOKEN"
+  
+  # Example for adding more servers
+  # github:
+  #   command: "npx"
+  #   args: ["-y", "@modelcontextprotocol/server-github"]
+  #   env_keys:
+  #     - "GITHUB_PERSONAL_ACCESS_TOKEN"
