@@ -157,10 +157,34 @@ MSG is stateless and container-friendly. It runs on AWS AgentCore Runtime, Farga
 
 | Approach | Multi-server | Dynamic Auth | Vendor-free | No local process required |
 |---|---|---|---|---|
-| **MSG (this project)** | Yes | Yes | Yes | Yes |
+| **MSG (this project)** | Yes | **Yes** | Yes | Yes |
+| Docker MCP Gateway | Yes | No (startup-time only) | Yes | Partial (Docker required) |
 | OpenAI Secure MCP Tunnel | No | No | No (OpenAI only) | No |
 | supergateway | No | No | Yes | Yes |
 | stdio directly (local) | No | No | Yes | No |
+
+## Comparison with Docker MCP Gateway
+
+[Docker MCP Gateway](https://docs.docker.com/ai/mcp-catalog-and-toolkit/mcp-gateway/) is Docker's open-source solution for orchestrating MCP servers, and shares the same core concept as MSG: bundling multiple stdio MCP servers behind a single gateway endpoint.
+
+However, there is a fundamental architectural difference:
+
+| Aspect | Docker MCP Gateway | MSG |
+|---|---|---|
+| **Process isolation** | Docker container per server | Child process (npx/node) per request |
+| **Credential injection** | `--secrets` file at startup (fixed) | `x-mcp-credentials` HTTP header per request (dynamic) |
+| **Multi-tenant support** | **No** — credentials are fixed at startup | **Yes** — each request can carry different credentials |
+| **Client connectivity** | Primarily stdio (remote HTTP is optional) | HTTP-first; works with any MCP client over the network |
+| **Cloud hosting** | Docker environment required | Deployable to Lambda, AgentCore Runtime, Fargate, etc. |
+| **Server registry** | Docker MCP Catalog (Docker Hub) + custom YAML | `servers.yaml` only (lightweight, no Docker dependency) |
+
+**The key differentiator of MSG is Dynamic Authentication.**
+
+Docker MCP Gateway injects credentials once at startup, meaning a single running gateway instance is bound to a single set of credentials. This works well for individual developer setups but does not support multi-tenant scenarios where different users authenticate with different tokens.
+
+MSG reads credentials from the `x-mcp-credentials` HTTP header on every request and injects them as environment variables when spawning the child process. This means a single MSG instance can serve multiple tenants simultaneously, each with their own credentials — without any shared state between requests.
+
+This design makes MSG particularly suited for cloud deployments where multiple users or agents need to access the same set of MCP servers with their own authentication context.
 
 ## License
 
